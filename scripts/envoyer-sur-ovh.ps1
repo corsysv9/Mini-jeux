@@ -48,8 +48,14 @@ try {
         $options = @()
         $code = Envoyer $fichiers[0] $options
     }
+    if ($code -eq 67) {
+        throw "Identifiant ou mot de passe FTP refusé par OVH."
+    }
+    if ($code -eq 6 -or $code -eq 7 -or $code -eq 28) {
+        throw "Le serveur FTP ne répond pas (code $code) : le réseau bloque peut-être le FTP (port 21). Essaie le partage de connexion du téléphone."
+    }
     if ($code -ne 0) {
-        throw "Connexion impossible (code $code) : vérifie l'identifiant et le mot de passe FTP."
+        throw "Envoi impossible (code curl $code)."
     }
     Write-Host "  ok  $($fichiers[0].Name)"
 
