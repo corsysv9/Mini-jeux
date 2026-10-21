@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "description": "Construit www/assets/vendor/three.min.js (Three.js réduit au strict nécessaire pour Time Bomb 3D).",
+  "devDependencies": {
+    "esbuild": "0.25.10",
+    "three": "0.186.1"
+  }
+}

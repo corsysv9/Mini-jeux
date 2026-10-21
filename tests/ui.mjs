@@ -10,6 +10,8 @@ const names = ['Gwendal', 'Léa', 'Max', 'Inès', 'Tom'];
 
 for (const n of names) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+  // Ce test suit l'interface 2D de Time Bomb (la vue 3D a son propre test).
+  await ctx.addInitScript(() => localStorage.setItem('mj_tb3d', '0'));
   const page = await ctx.newPage();
   page.on('pageerror', (e) => errors.push(`${n}: ${e.message}`));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(`${n}: ${m.text()}`); });

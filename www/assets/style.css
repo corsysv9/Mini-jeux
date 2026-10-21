@@ -242,3 +242,86 @@ div.toggle { text-align: center; }
   font-weight: 600;
   z-index: 10;
 }
+
+/* Time Bomb en 3D : la scène plein écran, l'interface flotte par-dessus. */
+#tb3d { position: fixed; inset: 0; z-index: 0; background: #070a1f; touch-action: none; user-select: none; -webkit-user-select: none; }
+#tb3d[hidden] { display: none; }
+#tb3d canvas { width: 100%; height: 100%; display: block; }
+body.tb3d { overflow: hidden; background: #070a1f; }
+body.tb3d main {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  max-width: none;
+  min-height: 0;
+  padding: calc(10px + env(safe-area-inset-top)) 12px calc(14px + env(safe-area-inset-bottom));
+  gap: 8px;
+  pointer-events: none;
+}
+body.tb3d main button, body.tb3d .tb-panel, body.tb3d .as-bar { pointer-events: auto; }
+.tb-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.tb-stats { display: flex; gap: 12px; }
+.tb-stats span { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.1; font-size: 11px; }
+.tb-stats, .tb-btn {
+  background: rgba(22, 19, 31, .78);
+  border: 1px solid rgba(245, 184, 61, .35);
+  border-radius: 999px;
+  padding: 6px 11px;
+  font-size: 13px;
+  color: var(--muted);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.tb-stats b { color: var(--accent); font-size: 15px; }
+.tb-tools { display: flex; gap: 6px; flex: none; }
+.tb-btn { width: auto; min-width: 38px; height: 34px; display: inline-flex; align-items: center; justify-content: center; color: var(--text); font-weight: 700; }
+body.tb3d .as-bar { background: rgba(22, 19, 31, .78); align-self: flex-start; }
+.tb-panel {
+  margin-top: auto;
+  align-self: center;
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: rgba(22, 19, 31, .84);
+  border: 1px solid rgba(245, 184, 61, .3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.tb-panel .chip { width: auto; padding: 8px 14px; color: var(--text); font-size: 15px; }
+.tb-panel .chip.on { background: var(--accent); color: var(--on-accent); }
+.tb-panel button.big { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.tb-panel .banner { padding: 16px; }
+.tb-roles .chip.blue { background: var(--blue); color: #fff; }
+.tb-roles .chip.red { background: var(--red); color: #fff; }
+.tb3d-flash { position: absolute; inset: 0; background: #fff6dc; opacity: 0; pointer-events: none; }
+.tb3d-caption {
+  position: absolute;
+  left: 50%;
+  bottom: 22%;
+  transform: translate(-50%, 12px);
+  opacity: 0;
+  transition: opacity .25s, transform .25s;
+  pointer-events: none;
+  text-align: center;
+  padding: 10px 20px;
+  border-radius: 16px;
+  max-width: calc(100% - 32px);
+  width: max-content;
+  background: rgba(22, 19, 31, .85);
+  color: var(--text);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, .4);
+}
+.tb3d-caption.show { opacity: 1; transform: translate(-50%, 0); }
+.tb3d-caption b { display: block; font-size: 26px; font-weight: 800; line-height: 1.15; }
+.tb3d-caption span { display: block; font-size: 14px; opacity: .85; margin-top: 2px; }
+.tb3d-caption.soft b { font-size: 18px; font-weight: 700; }
+.tb3d-caption.blue { background: rgba(47, 111, 192, .92); color: #fff; }
+.tb3d-caption.red { background: rgba(200, 58, 54, .94); color: #fff; }
+.tb3d-caption.green { background: rgba(76, 195, 138, .94); color: var(--on-green); }
+.tb3d-caption.gold { background: rgba(245, 184, 61, .94); color: var(--on-accent); }
+.tb-panel .banner big { font-size: 24px; }
+.tb-panel .banner { padding: 12px; gap: 2px; }
