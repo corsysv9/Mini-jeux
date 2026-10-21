@@ -16,6 +16,8 @@ const AVATAR_COLORS = ['#7a4fd0', '#2f7d8a', '#a3532a', '#3f7d4e', '#2f5d8a', '#
 const ICONS = {
   moon: '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
   sun: '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>',
+  sound: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
+  mute: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 6 6M22 9l-6 6"/></svg>',
   scissors: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>',
 };
 
@@ -140,6 +142,59 @@ async function poll() {
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
 
+// ---------- Time Bomb en 3D (chargé seulement quand on en a besoin) ----------
+
+const TB3D = { mod: null, inst: null, loading: null, failed: false, shown: null };
+
+function tb3dWanted() {
+  let pref = '1';
+  try { pref = localStorage.getItem('mj_tb3d') || '1'; } catch (e) { /* stockage indisponible */ }
+  return pref === '1' && !TB3D.failed;
+}
+
+function loadTB3D() {
+  if (!TB3D.loading) {
+    TB3D.loading = import(new URL('assets/timebomb3d/main.js?v=1', document.baseURI).href)
+      .then((mod) => { TB3D.mod = mod; })
+      .catch(() => { TB3D.failed = true; });
+  }
+  return TB3D.loading;
+}
+
+// Affiche (ou cache) la scène 3D selon l'état du salon ; renvoie true si elle est visible.
+function syncTB3D() {
+  const r = S.room;
+  const want = !!(r && r.status !== 'lobby' && r.game === 'timebomb' && r.g && tb3dWanted() && r.players.some((p) => p.id === r.me));
+  if (!want) {
+    if (TB3D.inst && TB3D.shown) TB3D.inst.show(null);
+    TB3D.shown = null;
+    return false;
+  }
+  if (!TB3D.mod) {
+    loadTB3D().then(render);
+    return false;
+  }
+  if (!TB3D.inst) {
+    try {
+      TB3D.inst = TB3D.mod.createTimeBomb3D({
+        style: 'victorien',
+        table: 'feutre',
+        onChange: () => render(),
+        onCut: (target, slot) => play('cut', { target, slot }),
+      });
+    } catch (e) {
+      TB3D.failed = true;
+      toast('Vue 3D indisponible sur cet appareil.');
+      return false;
+    }
+  }
+  if (TB3D.shown !== r) {
+    TB3D.shown = r;
+    TB3D.inst.show(r);
+  }
+  return true;
+}
+
 // ---------- Rendu ----------
 
 function render() {
@@ -147,15 +202,21 @@ function render() {
   const focused = document.activeElement && document.activeElement.id;
   let html;
   let night = false;
+  const in3d = syncTB3D();
   if (!S.session) html = viewHome();
   else if (!S.room) html = '<p class="center muted">Connexion au salon…</p>';
-  else if (S.room.status === 'lobby') html = viewLobby();
+  else if (S.room.status === 'lobby') {
+    html = viewLobby();
+    if (S.room.game === 'timebomb' && tb3dWanted()) loadTB3D(); // préchargement pendant qu'on attend
+  } else if (in3d) html = viewTimeBomb3D();
+  else if (S.room.game === 'timebomb' && tb3dWanted() && !TB3D.mod) html = '<p class="center muted">Ouverture de Big Ben…</p>';
   else {
     html = viewGame();
     night = S.room.game === 'loupgarou' && ['night', 'witch'].includes(S.room.g.phase);
   }
   document.body.classList.toggle('night', night);
-  document.querySelector('meta[name=theme-color]').content = night ? '#101a3a' : '#16131f';
+  document.body.classList.toggle('tb3d', in3d);
+  document.querySelector('meta[name=theme-color]').content = in3d ? '#070a1f' : (night ? '#101a3a' : '#16131f');
   app.innerHTML = html;
   if (focused) {
     const el = document.getElementById(focused);
@@ -441,6 +502,44 @@ function voteRecap(votes) {
 
 const TB_CARDS = { wire: ['FIL', 'blue'], safe: ['SANS DANGER', ''], bomb: ['BIG BEN', 'red'] };
 
+// Interface posée par-dessus la scène 3D ; elle suit l'état affiché (en retard sur le serveur
+// le temps des animations), pour ne jamais dévoiler une carte avant qu'elle soit retournée.
+function viewTimeBomb3D() {
+  const v = TB3D.inst.view();
+  const g = v.g;
+  if (!g) return '';
+  const me = S.room.me;
+  let html = `<div class="tb-top">
+    <div class="tb-stats"><span><b>${g.round}/4</b> manche</span><span><b>${g.wires}/${v.n}</b> fils</span><span><b>${g.cuts}/${v.n}</b> coupes</span></div>
+    <div class="tb-tools">
+      <button class="tb-btn" data-act="tb_sound" aria-label="${v.sound ? 'Couper le son' : 'Activer le son'}">${v.sound ? ICONS.sound : ICONS.mute}</button>
+      <button class="tb-btn" data-act="tb_view" data-mode="0" aria-label="Passer en vue 2D">2D</button>
+      ${isHost() ? '<button class="tb-btn" data-act="lobby">Salon</button>' : ''}
+    </div></div>
+    ${asBar()}`;
+  let panel = '';
+  if (v.ended) {
+    const reasons = { bomb: 'Big Ben a explosé !', wires: 'Tous les fils sont trouvés !', time: 'Le temps est écoulé !' };
+    const won = g.winner === g.myRole;
+    panel = `${endBanner(won, won ? 'Victoire' : 'Défaite', g.winner === 'sherlock' ? 'Les Sherlock gagnent !' : 'Les Moriarty gagnent !', reasons[g.reason])}
+      <div class="chips tb-roles">${allIds().map((id) => `<span class="chip ${g.roles[id] === 'sherlock' ? 'blue' : 'red'}">${name(id)}${id === me ? ' (toi)' : ''} · ${g.roles[id] === 'sherlock' ? 'Sherlock' : 'Moriarty'}</span>`).join('')}</div>
+      ${isHost()
+    ? '<button class="big" data-act="start">Rejouer</button><button class="secondary" data-act="lobby">Changer de jeu</button>'
+    : `<p class="center small">${name(S.room.hostId)} peut relancer une partie.</p>`}`;
+  } else if (v.canCut) {
+    const targets = allIds().filter((id) => id !== me && g.handSizes[id] > 0);
+    panel = `<div class="small"><b>Tu as la pince.</b> Choisis chez qui couper (ou touche une carte).</div>
+      <div class="chips">${targets.map((id) => `<button class="chip ${v.selected === id ? 'on' : ''}" data-act="tb_pick" data-id="${id}">${name(id)}</button>`).join('')}</div>
+      ${v.selected !== null ? `<button class="big" data-act="tb_confirm">${ICONS.scissors} Couper chez ${name(v.selected)}</button>` : ''}`;
+  } else if (v.pending) {
+    panel = '<div class="small center">Coupe en cours…</div>';
+  } else if (!v.busy && g.phase === 'play') {
+    panel = `<div class="small center">${g.pincers === me ? 'Tu as la pince.' : `<b>${name(g.pincers)}</b> a la pince.`} Touche tes cartes ou ta carte rôle pour les regarder.</div>`;
+  }
+  if (panel) html += `<div class="tb-panel ${v.ended ? 'end' : ''}">${panel}</div>`;
+  return html;
+}
+
 function viewTimeBomb(g) {
   const me = S.room.me;
   const n = S.room.players.length;
@@ -450,7 +549,7 @@ function viewTimeBomb(g) {
   if (c.wire) parts.push(plural(c.wire, 'fil'));
   if (c.safe) parts.push(`${c.safe} sans danger`);
   if (c.bomb) parts.push('Big Ben !');
-  let html = '';
+  let html = TB3D.failed ? '' : '<button class="secondary" data-act="tb_view" data-mode="1">Passer en vue 3D (Big Ben)</button>';
   if (g.phase !== 'end') {
     html += `<div class="tiles">
       ${secret('tbrole', 'Ton rôle', sherlock ? 'Sherlock' : 'Moriarty', sherlock ? 'Trouve tous les fils.' : 'Fais couper Big Ben.', sherlock ? 'blue' : 'red')}
@@ -712,6 +811,16 @@ const handlers = {
   uc_guess: () => { const w = draft('guess').trim(); if (w) { play('guess', { word: w }); S.draft.guess = ''; } },
   uc_next: () => play('next'),
   tb_cut: (el) => play('cut', { target: Number(el.dataset.id) }),
+  tb_view: (el) => {
+    try { localStorage.setItem('mj_tb3d', el.dataset.mode); } catch (e) { /* ignoré */ }
+    render();
+  },
+  tb_sound: () => TB3D.inst.sound(!TB3D.inst.view().sound),
+  tb_pick: (el) => {
+    const id = Number(el.dataset.id);
+    TB3D.inst.select(TB3D.inst.view().selected === id ? null : id);
+  },
+  tb_confirm: () => TB3D.inst.confirmCut(),
   lg_wolf: (el) => play('wolf_vote', { target: Number(el.dataset.id) }),
   lg_seer: (el) => play('seer', { target: Number(el.dataset.id) }),
   lg_seer_ok: () => play('seer_ok'),

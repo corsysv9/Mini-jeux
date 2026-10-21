@@ -66,7 +66,12 @@ function tb_action(array &$g, $pid, $type, array $in, $isHost)
     $card = $hand[$i];
     array_splice($hand, $i, 1);
     $g['hands'][$target] = $hand;
-    $g['revealed'][] = ['card' => $card, 'from' => $target, 'by' => $pid, 'round' => $g['round']];
+    $entry = ['card' => $card, 'from' => $target, 'by' => $pid, 'round' => $g['round']];
+    // Place de la carte visée dans la vue 3D : purement visuel, le tirage reste au hasard.
+    if (isset($in['slot']) && is_numeric($in['slot'])) {
+        $entry['slot'] = max(0, min(7, (int) $in['slot']));
+    }
+    $g['revealed'][] = $entry;
     $g['pincers'] = $target;
     $g['cuts']++;
 
