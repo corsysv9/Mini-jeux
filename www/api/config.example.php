@@ -1,5 +1,6 @@
 <?php
-// Copie ce fichier en config.php et remplis-le avec les infos de ta base OVH
+// Optionnel : sans config.php, le site utilise un fichier SQLite créé automatiquement.
+// Pour utiliser MySQL à la place, copie ce fichier en config.php et remplis-le
 // (Espace client OVH > Hébergements > ton hébergement > Bases de données).
 // Ne mets jamais config.php sur GitHub : il est ignoré par .gitignore.
 return [
