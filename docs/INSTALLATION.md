@@ -2,45 +2,55 @@
 
 Trois façons de jouer, cumulables : sur l'hébergement OVH, sur le NAS, et via l'appli Android.
 
-> Ne mets jamais de mot de passe dans GitHub ou dans une conversation : il ne va que dans `config.php`, directement sur le serveur.
+> Ne mets jamais de mot de passe dans GitHub ou dans une conversation.
 
 ---
 
 ## 1. Hébergement OVH (jellyker.fr)
 
 Le plus simple pour jouer avec des amis où qu'ils soient : HTTPS et nom de domaine sont déjà là.
+**Aucune base de données à acheter** : le site range les parties dans un petit fichier (SQLite) qu'il crée tout seul.
 
-### a. Créer la base MySQL
+### Méthode automatique : GitHub envoie le site (recommandée)
 
-1. Espace client OVH → **Web Cloud** → **Hébergements** → `jellykb.cluster129.hosting.ovh.net`.
-2. Onglet **Bases de données** → **Créer une base de données** → MySQL. Choisis un utilisateur et un mot de passe (note-les).
-3. Une fois la base créée, note dans le tableau l'**adresse du serveur** (du type `xxxxx.mysql.db`) et le **nom de la base**.
-4. Dans le même onglet, ouvre **phpMyAdmin** (menu `…` de la base), connecte-toi, va dans l'onglet **SQL**, colle le contenu de [`sql/schema.sql`](../sql/schema.sql) et clique **Exécuter**.
+Pratique si ton réseau bloque le FTP, et le site se met à jour tout seul à chaque modification.
 
-### b. Préparer la configuration
+1. Sur GitHub, dans le dépôt : **Settings** → **Secrets and variables** → **Actions** → **New repository secret**.
+2. Nom : `FTP_PASSWORD`, valeur : ton mot de passe FTP OVH (onglet **FTP - SSH**). Enregistre.
+3. Onglet **Actions** → **Déployer sur OVH** → **Run workflow**. Au bout d'une minute, la coche verte indique que le site est en ligne.
 
-1. Télécharge le projet : sur GitHub, **Code** → **Download ZIP**, puis décompresse-le.
-2. Dans `www/api/`, copie `config.example.php` en **`config.php`** et remplis les 3 lignes avec les infos de l'étape a :
+L'identifiant (`jellykb`), le serveur et le dossier (`www`) sont réglés par défaut ; s'ils changent, crée les *variables* `FTP_USER`, `FTP_SERVER` ou `FTP_DIR` au même endroit, onglet **Variables**.
 
-```php
-'dsn'  => 'mysql:host=xxxxx.mysql.db;dbname=nomdelabase;charset=utf8mb4',
-'user' => 'nomutilisateur',
-'pass' => 'tonmotdepasse',
+### Méthode rapide (Windows) : script PowerShell
+
+Depuis le dossier du projet décompressé, clic droit > « Ouvrir dans le terminal », puis :
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\envoyer-sur-ovh.ps1
 ```
 
-### c. Envoyer les fichiers par FTP
+Le script demande l'identifiant et le mot de passe FTP (onglet **FTP - SSH** de l'hébergement) et envoie tout le dossier `www/` dans le dossier `www` du serveur. Passe ensuite directement à l'étape b.
 
-1. Onglet **FTP - SSH** de l'hébergement : note le serveur FTP (`ftp.cluster129.hosting.ovh.net`) et l'identifiant. Si besoin, change le mot de passe FTP depuis cet onglet.
-2. Avec **FileZilla** (gratuit), connecte-toi et ouvre le dossier **`www`** du serveur.
-3. Envoie **le contenu** du dossier `www/` du projet (pas le dossier lui-même) : `index.html`, `assets/`, `api/`, `sw.js`, `manifest.webmanifest`, `.htaccess`.
+### a. Envoyer les fichiers par FTP
+
+1. Télécharge le projet : sur GitHub, **Code** → **Download ZIP**, puis décompresse-le.
+2. Espace client OVH → **Web Cloud** → **Hébergements** → `jellykb.cluster129.hosting.ovh.net` → onglet **FTP - SSH** : note le serveur FTP (`ftp.cluster129.hosting.ovh.net`) et l'identifiant. Si besoin, change le mot de passe FTP depuis cet onglet.
+3. Avec **FileZilla** (gratuit), connecte-toi et ouvre le dossier **`www`** du serveur.
+4. Envoie **le contenu** du dossier `www/` du projet (pas le dossier lui-même) : `index.html`, `assets/`, `api/`, `sw.js`, `manifest.webmanifest`, `.htaccess`.
    *Pour une adresse dédiée comme `jeux.jellyker.fr` : onglet **Multisite** → **Ajouter un domaine** → sous-domaine `jeux`, dossier racine `jeux`, puis envoie les fichiers dans ce dossier `jeux`.*
 
-### d. Vérifier PHP et HTTPS
+À la première partie, le site crée un dossier `minijeux-data` à côté de `www` pour y ranger les salons. Ne le supprime pas pendant une partie (sinon rien de grave : les salons en cours sont juste perdus).
+
+### b. Vérifier PHP et HTTPS
 
 - Onglet **Informations générales** : la version PHP doit être **8.0 ou plus** (sinon « Modifier la configuration »).
 - Onglet **Multisite** : le domaine doit avoir **SSL activé** (certificat Let's Encrypt gratuit). Le HTTPS est nécessaire pour installer l'appli.
 
 Ouvre ensuite https://jellyker.fr (ou https://jeux.jellyker.fr) : la page « Mini-jeux » doit s'afficher. Crée un salon pour tester.
+
+### Option : MySQL
+
+Inutile en temps normal. Si tu as déjà une base MySQL (ou si SQLite était indisponible), crée la table avec [`sql/schema.sql`](../sql/schema.sql) dans phpMyAdmin, puis copie `www/api/config.example.php` en **`config.php`** et remplis-le. Dès que `config.php` existe, le site utilise MySQL.
 
 ---
 

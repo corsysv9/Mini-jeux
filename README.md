@@ -5,7 +5,7 @@ Pas de compte : on crée un salon, on partage le code de 5 lettres, et l'appli f
 
 - Interface en HTML/CSS/JS sans framework ni étape de build (`www/`).
 - Petite API PHP (`www/api/`) ; les rôles secrets ne quittent jamais le serveur, chaque joueur ne reçoit que ce qu'il a le droit de voir.
-- Base MySQL (hébergement OVH) ou SQLite (NAS / Docker).
+- Stockage SQLite créé automatiquement (aucune base à acheter), ou MySQL si on le souhaite.
 - Les téléphones interrogent le serveur toutes les 1,5 s : ça marche sur n'importe quel hébergement mutualisé.
 - Installable comme une appli (PWA) et disponible en APK Android.
 
@@ -36,6 +36,6 @@ node tests/ui.mjs http://127.0.0.1:8099 out/   # 5 téléphones simulés avec Pl
 | `www/api/index.php` | point d'entrée de l'API |
 | `www/api/lib/room.php` | salons, joueurs, lancement des parties |
 | `www/api/lib/games/*.php` | règles de chaque jeu |
-| `sql/schema.sql` | table MySQL à créer sur OVH |
+| `sql/schema.sql` | table MySQL (optionnelle) |
 | `docker-compose.yml` | lancement sur un NAS |
 | `android-app/`, `.github/workflows/apk.yml` | construction de l'APK |
