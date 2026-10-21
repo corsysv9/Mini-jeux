@@ -6,10 +6,8 @@ jobs:
   diag:
     runs-on: ubuntu-latest
     steps:
-      - name: Jeux
+      - name: Cert
         run: |
-          curl -sS -m 20 -D - -o /tmp/b https://jeux.jellyker.fr/ | head -12 || true
-          grep -o "<title>[^<]*" /tmp/b || true
-          curl -sS -m 20 https://jeux.jellyker.fr/api/index.php -H 'Content-Type: application/json' -d '{"action":"state","code":"ZZZZZ"}' || true
-          echo
-          curl -sS -m 20 https://jellyker.fr/ | grep -o "ouvert: true, href: '[^']*'" || true
+          curl -sS -m 20 -o /dev/null -w "verifie %{http_code}\n" https://jellykb.cluster129.hosting.ovh.net/ || true
+          echo | openssl s_client -connect jellykb.cluster129.hosting.ovh.net:443 -servername jellykb.cluster129.hosting.ovh.net 2>/dev/null | openssl x509 -noout -subject -ext subjectAltName 2>/dev/null | head -5 || true
+          curl -sS -m 20 -o /dev/null -w "http %{http_code}\n" http://jellykb.cluster129.hosting.ovh.net/ || true
