@@ -97,6 +97,37 @@ function add_player(array &$room, $name)
     return ['id' => $id, 'token' => $token];
 }
 
+// Mode test : l'hôte peut jouer à la place d'un joueur test (paramètre « as »).
+function actor(array $room, $pid, array $in)
+{
+    $as = isset($in['as']) ? (int) $in['as'] : 0;
+    if (!$as || $as === $pid || $room['hostId'] !== $pid) {
+        return $pid;
+    }
+    foreach ($room['players'] as $p) {
+        if ($p['id'] === $as && !empty($p['bot'])) {
+            return $as;
+        }
+    }
+    // Joueur test retiré entre-temps : on revient à soi.
+    return $pid;
+}
+
+function add_bot(array &$room)
+{
+    $names = array_map(function ($p) {
+        return mb_strtolower($p['name']);
+    }, $room['players']);
+    for ($i = 1; in_array('test ' . $i, $names, true); $i++) {
+    }
+    $me = add_player($room, 'Test ' . $i);
+    foreach ($room['players'] as &$p) {
+        if ($p['id'] === $me['id']) {
+            $p['bot'] = true;
+        }
+    }
+}
+
 function require_host(array $room, $pid)
 {
     if ($room['hostId'] !== $pid) {
@@ -159,7 +190,7 @@ function action_state(array $in)
     }
     $room = room_read($code);
     $pid = player_by_token($room, isset($in['token']) ? $in['token'] : '');
-    return ['room' => build_view($room, $pid)];
+    return ['room' => build_view($room, actor($room, $pid, $in), $pid)];
 }
 
 // Toutes les autres actions modifient le salon.
@@ -175,7 +206,7 @@ function action_room(array $in, $action)
     }
     $room = room_read($code);
     $pid = player_by_token($room, $in['token']);
-    return ['room' => build_view($room, $pid)];
+    return ['room' => build_view($room, actor($room, $pid, $in), $pid)];
 }
 
 function room_apply(array &$room, $pid, $action, array $in)
@@ -186,6 +217,10 @@ function room_apply(array &$room, $pid, $action, array $in)
                 throw new GameError("On ne peut pas quitter pendant une partie : demande à l'hôte de revenir au salon.");
             }
             remove_player($room, $pid);
+            return;
+        case 'add_bot':
+            require_host($room, $pid);
+            add_bot($room);
             return;
         case 'kick':
             require_host($room, $pid);
@@ -239,7 +274,7 @@ function room_apply(array &$room, $pid, $action, array $in)
             }
             $fn = game_fn($room['game'], 'action');
             $type = isset($in['type']) ? (string) $in['type'] : '';
-            $fn($room['g'], $pid, $type, $in, $room['hostId'] === $pid);
+            $fn($room['g'], actor($room, $pid, $in), $type, $in, $room['hostId'] === $pid);
             return;
     }
     throw new GameError('Action inconnue.');
@@ -255,15 +290,17 @@ function remove_player(array &$room, $id)
     }
 }
 
-function build_view(array $room, $pid)
+// $pid : le joueur dont on montre le point de vue ; $real : celui qui tient le téléphone.
+function build_view(array $room, $pid, $real = null)
 {
     $players = array_map(function ($p) {
-        return ['id' => $p['id'], 'name' => $p['name']];
+        return ['id' => $p['id'], 'name' => $p['name'], 'bot' => !empty($p['bot'])];
     }, $room['players']);
     $view = [
         'code' => $room['code'],
         'v' => $room['v'],
         'me' => $pid,
+        'realMe' => $real === null ? $pid : $real,
         'hostId' => $room['hostId'],
         'players' => $players,
         'game' => $room['game'],

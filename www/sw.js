@@ -1,6 +1,6 @@
 // Service worker minimal : rend le site installable et garde l'interface en cache.
 // L'API n'est jamais mise en cache (l'état des parties doit toujours être frais).
-const CACHE = 'mini-jeux-v2';
+const CACHE = 'mini-jeux-v3';
 const SHELL = ['./', 'index.html', 'assets/style.css?v=2', 'assets/app.js?v=2', 'assets/icon.svg', 'manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {
