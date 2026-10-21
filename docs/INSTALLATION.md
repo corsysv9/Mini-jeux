@@ -11,6 +11,16 @@ Trois façons de jouer, cumulables : sur l'hébergement OVH, sur le NAS, et via 
 Le plus simple pour jouer avec des amis où qu'ils soient : HTTPS et nom de domaine sont déjà là.
 **Aucune base de données à acheter** : le site range les parties dans un petit fichier (SQLite) qu'il crée tout seul.
 
+### Méthode rapide (Windows) : script PowerShell
+
+Depuis le dossier du projet décompressé, clic droit > « Ouvrir dans le terminal », puis :
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\envoyer-sur-ovh.ps1
+```
+
+Le script demande l'identifiant et le mot de passe FTP (onglet **FTP - SSH** de l'hébergement) et envoie tout le dossier `www/` dans le dossier `www` du serveur. Passe ensuite directement à l'étape b.
+
 ### a. Envoyer les fichiers par FTP
 
 1. Télécharge le projet : sur GitHub, **Code** → **Download ZIP**, puis décompresse-le.
