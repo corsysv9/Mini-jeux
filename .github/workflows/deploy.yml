@@ -1,0 +1,33 @@
+# Envoie www/ sur l'hébergement OVH par FTP, depuis les serveurs de GitHub.
+# À faire une fois : Settings > Secrets and variables > Actions > New repository secret
+#   FTP_PASSWORD = mot de passe FTP OVH
+# Ensuite : automatique à chaque modification du site sur main, ou onglet Actions > Run workflow.
+name: Déployer sur OVH
+
+on:
+  push:
+    branches: [main]
+    paths: ["www/**"]
+  workflow_dispatch:
+
+concurrency: deploy-ovh
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Envoyer le site par FTP
+        env:
+          FTP_SERVER: ${{ vars.FTP_SERVER || 'ftp.cluster129.hosting.ovh.net' }}
+          FTP_USER: ${{ vars.FTP_USER || 'jellykb' }}
+          FTP_DIR: ${{ vars.FTP_DIR || 'www' }}
+          LFTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          if [ -z "$LFTP_PASSWORD" ]; then
+            echo "::warning::Secret FTP_PASSWORD absent (Settings > Secrets and variables > Actions) : site non envoyé."
+            [ "$GITHUB_EVENT_NAME" = workflow_dispatch ] && exit 1 || exit 0
+          fi
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp > /dev/null
+          lftp -e "set ftp:ssl-allow yes; set ssl:verify-certificate no; set net:timeout 30; set net:max-retries 3; mirror --reverse --verbose --no-perms www/ $FTP_DIR/; bye" --env-password -u "$FTP_USER" "$FTP_SERVER"

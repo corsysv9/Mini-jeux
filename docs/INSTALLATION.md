@@ -11,6 +11,16 @@ Trois façons de jouer, cumulables : sur l'hébergement OVH, sur le NAS, et via 
 Le plus simple pour jouer avec des amis où qu'ils soient : HTTPS et nom de domaine sont déjà là.
 **Aucune base de données à acheter** : le site range les parties dans un petit fichier (SQLite) qu'il crée tout seul.
 
+### Méthode automatique : GitHub envoie le site (recommandée)
+
+Pratique si ton réseau bloque le FTP, et le site se met à jour tout seul à chaque modification.
+
+1. Sur GitHub, dans le dépôt : **Settings** → **Secrets and variables** → **Actions** → **New repository secret**.
+2. Nom : `FTP_PASSWORD`, valeur : ton mot de passe FTP OVH (onglet **FTP - SSH**). Enregistre.
+3. Onglet **Actions** → **Déployer sur OVH** → **Run workflow**. Au bout d'une minute, la coche verte indique que le site est en ligne.
+
+L'identifiant (`jellykb`), le serveur et le dossier (`www`) sont réglés par défaut ; s'ils changent, crée les *variables* `FTP_USER`, `FTP_SERVER` ou `FTP_DIR` au même endroit, onglet **Variables**.
+
 ### Méthode rapide (Windows) : script PowerShell
 
 Depuis le dossier du projet décompressé, clic droit > « Ouvrir dans le terminal », puis :
