@@ -6,7 +6,9 @@ Trois façons de jouer, cumulables : sur l'hébergement OVH, sur le NAS, et via 
 
 ---
 
-## 1. Hébergement OVH (jellyker.fr)
+## 1. Hébergement OVH
+
+jellyker.fr pointe vers le NAS (le hub « Carte des mondes »). Les mini-jeux sont chez OVH, à l'adresse https://jellykb.cluster129.hosting.ovh.net/, et l'île Mini-jeux du hub ouvre cette adresse.
 
 Le plus simple pour jouer avec des amis où qu'ils soient : HTTPS et nom de domaine sont déjà là.
 **Aucune base de données à acheter** : le site range les parties dans un petit fichier (SQLite) qu'il crée tout seul.
@@ -46,7 +48,7 @@ Le script demande l'identifiant et le mot de passe FTP (onglet **FTP - SSH** de 
 - Onglet **Informations générales** : la version PHP doit être **8.0 ou plus** (sinon « Modifier la configuration »).
 - Onglet **Multisite** : le domaine doit avoir **SSL activé** (certificat Let's Encrypt gratuit). Le HTTPS est nécessaire pour installer l'appli.
 
-Ouvre ensuite https://jellyker.fr (ou https://jeux.jellyker.fr) : la page « Mini-jeux » doit s'afficher. Crée un salon pour tester.
+Ouvre ensuite https://jellykb.cluster129.hosting.ovh.net/ (ou https://jeux.jellyker.fr si tu as ajouté ce sous-domaine) : la page « Mini-jeux » doit s'afficher. Crée un salon pour tester.
 
 ### Option : MySQL
 
