@@ -56,8 +56,10 @@ await host.waitForSelector('.game.active[data-game=timebomb]');
 await host.click('[data-act=start]');
 for (const p of phones) await p.waitForSelector('.stats');
 let cutter = null;
-for (const p of phones) if (await p.$('[data-act=tb_cut]')) cutter = p;
-await cutter.click('[data-act=tb_cut]');
+for (const p of phones) if (await p.$('[data-act=tb_target]')) cutter = p;
+// On choisit un joueur, puis une de ses cartes.
+await cutter.click('[data-act=tb_target]');
+await cutter.click('.cardpick [data-act=tb_cut]');
 await cutter.waitForSelector('.banner.row .badge');
 await cutter.click('.secret');
 await cutter.click('.tiles .secret:nth-child(2)');
@@ -66,8 +68,13 @@ await shot(cutter, '04-timebomb');
 for (let turn = 0; turn < 40; turn++) {
   if (await host.$('.banner.win, .banner.lose')) break;
   for (const p of phones) {
-    const btn = await p.$('[data-act=tb_cut]');
-    if (btn) { await btn.click(); await p.waitForTimeout(300); break; }
+    const btn = await p.$('[data-act=tb_target]');
+    if (btn) {
+      await btn.click();
+      await p.click('.cardpick [data-act=tb_cut]:last-child');
+      await p.waitForTimeout(300);
+      break;
+    }
   }
   await host.waitForTimeout(1700);
 }

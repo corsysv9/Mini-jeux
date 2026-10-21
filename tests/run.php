@@ -150,6 +150,11 @@ for ($game = 0; $game < 50; $game++) {
     $results[$g['reason']] = 1;
 }
 check(count($results) >= 2, 'plusieurs fins possibles en time bomb');
+// La carte coupée est bien celle que le joueur a choisie.
+$g = ['players' => [1, 2], 'roles' => [], 'hands' => [1 => ['safe'], 2 => ['safe', 'wire', 'safe']], 'round' => 1,
+    'cuts' => 0, 'wires' => 0, 'revealed' => [], 'pincers' => 1, 'phase' => 'play', 'winner' => null];
+tb_action($g, 1, 'cut', ['target' => 2, 'slot' => 1], false);
+check($g['revealed'][0]['card'] === 'wire' && $g['hands'][2] === ['safe', 'safe'], 'time bomb : la carte choisie est coupée');
 
 // --- Loup-garou ---
 $winners = [];

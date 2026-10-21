@@ -50,6 +50,11 @@ while (!(await page.$('.tb-panel.end')) && cuts < 40) {
   }
   try {
     await page.click('[data-act=tb_pick]', { timeout: 5000 });
+    await page.click('.cardpick [data-act=tb_slot]:first-child', { timeout: 5000 });
+    if (!cuts) {
+      await sleep(1500);
+      await shot('3d-02b-choix-carte');
+    }
     await page.click('[data-act=tb_confirm]', { timeout: 5000 });
   } catch (e) {
     continue; // l'interface s'est redessinée entre-temps : on recommence
