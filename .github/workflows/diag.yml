@@ -1,0 +1,9 @@
+name: Diagnostic hub
+on:
+  push:
+    branches: [diag/hub]
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -sS -m 20 https://jellyker.fr/ | grep -n "nom: 'Mini-jeux'" | cut -c1-400
