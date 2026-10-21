@@ -3,3 +3,5 @@ data/
 node_modules
 android/
 *.apk
+android-app/www/
+android-app/capacitor.config.json

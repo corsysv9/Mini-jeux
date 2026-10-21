@@ -50,15 +50,9 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: Icône de l'appli
-        working-directory: android-app/android/app/src/main/res
-        run: |
-          rm -rf mipmap-anydpi-v26
-          for d in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
-            dir=mipmap-${d%%:*}; size=${d##*:}
-            convert ../../../../../../www/assets/icon-512.png -resize ${size}x${size} $dir/ic_launcher.png
-            cp $dir/ic_launcher.png $dir/ic_launcher_round.png
-          done
+      - name: Icône et écran de démarrage
+        working-directory: android-app
+        run: cp -r res/. android/app/src/main/res/
 
       - name: Compiler l'APK
         working-directory: android-app/android
