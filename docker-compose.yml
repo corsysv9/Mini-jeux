@@ -1,0 +1,15 @@
+# Installation sur le NAS (UGREEN, Synology…) : voir docs/INSTALLATION.md
+services:
+  mini-jeux:
+    image: php:8.3-apache
+    container_name: mini-jeux
+    ports:
+      - "8090:80"
+    volumes:
+      - ./www:/var/www/html:ro
+      - ./data:/data
+    environment:
+      MINIJEUX_DSN: "sqlite:/data/minijeux.sqlite"
+    # La base SQLite doit appartenir à l'utilisateur d'Apache.
+    command: bash -c "chown -R www-data:www-data /data && exec apache2-foreground"
+    restart: unless-stopped
