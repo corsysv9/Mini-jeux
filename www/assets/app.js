@@ -28,6 +28,7 @@ const S = {
   pollTimer: null,
   installPrompt: null,
   apk: false,
+  as: null, // mode test : id du joueur test incarné par l'hôte
 };
 
 const app = document.getElementById('app');
@@ -50,7 +51,9 @@ function name(id) {
   const p = S.room && S.room.players.find((x) => x.id === id);
   return p ? esc(p.name) : '?';
 }
-function isHost() { return S.room && S.room.hostId === S.room.me; }
+function realMe() { return S.room.realMe !== undefined ? S.room.realMe : S.room.me; }
+function isHost() { return S.room && S.room.hostId === realMe(); }
+function bots() { return S.room.players.filter((p) => p.bot); }
 function settings() { return Array.isArray(S.room.settings) ? {} : S.room.settings; }
 function allIds() { return S.room.players.map((p) => p.id); }
 function plural(n, word) { return `${n} ${word}${n > 1 ? 's' : ''}`; }
@@ -86,8 +89,9 @@ async function send(action, data) {
   if (S.busy) return;
   S.busy = true;
   try {
-    const res = await api(action, Object.assign({ code: S.session.code, token: S.session.token }, data || {}));
-    if (res.room) setRoom(res.room);
+    const as = S.as;
+    const res = await api(action, Object.assign({ code: S.session.code, token: S.session.token, as }, data || {}));
+    if (res.room && as === S.as) setRoom(res.room);
   } catch (e) {
     toast(e.message);
   } finally {
@@ -101,6 +105,8 @@ function setRoom(room) {
   // Une réponse de polling partie avant une action peut arriver après : on l'ignore.
   if (prev && prev.code === room.code && room.v < prev.v) return;
   S.room = room;
+  // Joueur test retiré : le serveur nous a rendu notre propre point de vue.
+  if (S.as && room.me !== S.as) S.as = null;
   // Nouvelle partie : les cartes secrètes sont recachées.
   const newGame = !prev || prev.status !== room.status || (prev.g && room.g && prev.g.phase === 'end' && room.g.phase !== 'end');
   if (newGame) S.reveal = {};
@@ -110,6 +116,7 @@ function setRoom(room) {
 function leaveSession(msg) {
   S.session = null;
   S.room = null;
+  S.as = null;
   saveJSON('mj_session', null);
   if (msg) toast(msg);
   render();
@@ -121,8 +128,10 @@ async function poll() {
   clearTimeout(S.pollTimer);
   if (S.session && !S.busy) {
     try {
-      const res = await api('state', { code: S.session.code, token: S.session.token, v: S.room ? S.room.v : 0 });
-      if (res.room) setRoom(res.room);
+      const as = S.as;
+      const res = await api('state', { code: S.session.code, token: S.session.token, as, v: S.room ? S.room.v : 0 });
+      // Réponse demandée pour un autre joueur (on vient de changer) : ignorée.
+      if (res.room && as === S.as) setRoom(res.room);
     } catch (e) {
       if (/n'existe|ne fais pas partie/.test(e.message)) leaveSession(e.message);
     }
@@ -296,10 +305,12 @@ function viewLobby() {
     <div class="grid2">${r.players.map((p) => `
       <div class="person">
         <span class="avatar" style="background:${AVATAR_COLORS[p.id % AVATAR_COLORS.length]}">${esc(p.name.charAt(0).toUpperCase())}</span>
-        <span class="who"><b>${esc(p.name)}</b><span>${[p.id === r.hostId ? 'hôte' : '', p.id === r.me ? 'toi' : ''].filter(Boolean).join(' · ') || 'joueur'}</span></span>
-        ${host && p.id !== r.me ? `<button class="kick" data-act="kick" data-id="${p.id}" aria-label="Retirer ${esc(p.name)}">×</button>` : ''}
+        <span class="who"><b>${esc(p.name)}</b><span>${[p.id === r.hostId ? 'hôte' : '', p.id === realMe() ? 'toi' : '', p.bot ? 'test' : ''].filter(Boolean).join(' · ') || 'joueur'}</span></span>
+        ${host && p.id !== realMe() ? `<button class="kick" data-act="kick" data-id="${p.id}" aria-label="Retirer ${esc(p.name)}">×</button>` : ''}
       </div>`).join('')}
     </div>
+    ${host && n < 20 ? '<button class="secondary" data-act="add_bot">Ajouter un joueur test</button>' : ''}
+    ${host && bots().length ? '<p class="small muted">Pendant la partie, tu pourras jouer à la place des joueurs test (barre en haut).</p>' : ''}
     <div class="section">Jeu</div>
     <div class="list">${Object.keys(GAMES).map((k) => {
       const tag = host ? 'button' : 'div';
@@ -316,12 +327,22 @@ function viewLobby() {
       : `<p class="center muted">En attente que ${name(r.hostId)} lance la partie…</p>`}</div>`;
 }
 
+// Mode test : choisir quel joueur on incarne sur ce téléphone.
+function asBar() {
+  if (!isHost() || !bots().length) return '';
+  const me = realMe();
+  const ids = [me].concat(bots().map((p) => p.id));
+  return `<div class="as-bar"><span class="small muted">Mode test, tu joues :</span><div class="chips">${ids.map((id) =>
+    `<button class="chip ${id === S.room.me ? 'on' : ''}" data-act="as" data-id="${id}">${id === me ? 'Moi' : name(id)}</button>`).join('')}</div></div>`;
+}
+
 function viewGame() {
   const r = S.room;
   const views = { undercover: viewUndercover, timebomb: viewTimeBomb, loupgarou: viewLoupGarou };
   const ended = r.g.phase === 'end';
   return `
     ${header(GAMES[r.game].name)}
+    ${asBar()}
     ${views[r.game](r.g)}
     ${ended ? `<div class="bottom">${isHost()
       ? '<button class="big" data-act="start">Rejouer</button><button class="secondary" data-act="lobby">Changer de jeu</button>'
@@ -669,6 +690,14 @@ const handlers = {
     }
   },
   kick: (el) => { if (confirm('Retirer ce joueur ?')) send('kick', { target: Number(el.dataset.id) }); },
+  add_bot: () => send('add_bot'),
+  as: (el) => {
+    const id = Number(el.dataset.id);
+    S.as = id === realMe() ? null : id;
+    S.reveal = {};
+    S.room.v = 0; // force le rechargement complet avec le nouveau point de vue
+    poll();
+  },
   choose: (el) => { if (el.dataset.game !== S.room.game) send('choose', { game: el.dataset.game, settings: {} }); },
   toggle_setting: (el) => {
     const s = currentSettings();

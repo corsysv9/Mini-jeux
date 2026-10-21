@@ -227,6 +227,30 @@ for ($game = 0; $game < 40; $game++) {
 }
 check(count($winners) === 2, 'les deux camps peuvent gagner');
 
+// --- Mode test (joueurs test incarnés par l'hôte) ---
+list($code, $t) = setup(2);
+$host = $t[1];
+expect_error(['action' => 'add_bot', 'code' => $code, 'token' => $t[2]], 'seul l\'hôte ajoute un joueur test');
+act($code, $host, 'add_bot');
+$r = act($code, $host, 'add_bot');
+check(count($r['players']) === 4, 'deux joueurs test ajoutés');
+$bot = $r['players'][2];
+check($bot['bot'] === true && $bot['name'] === 'Test 1', 'joueur test nommé Test 1');
+check($r['players'][3]['name'] === 'Test 2', 'deuxième joueur test');
+act($code, $host, 'choose', ['game' => 'undercover', 'settings' => []]);
+act($code, $host, 'start');
+$v = call(['action' => 'state', 'code' => $code, 'token' => $host, 'as' => $bot['id']])['room'];
+check($v['me'] === $bot['id'] && $v['realMe'] === 1, 'l\'hôte voit le point de vue du joueur test');
+$v2 = call(['action' => 'state', 'code' => $code, 'token' => $t[2], 'as' => $bot['id']])['room'];
+check($v2['me'] === 2, 'un joueur normal ne peut pas incarner un joueur test');
+$v3 = call(['action' => 'state', 'code' => $code, 'token' => $host, 'as' => 2])['room'];
+check($v3['me'] === 1, 'l\'hôte ne peut pas incarner un vrai joueur');
+act($code, $host, 'play', ['type' => 'to_vote']);
+$r = act($code, $host, 'play', ['type' => 'vote', 'target' => 2, 'as' => $bot['id']]);
+check($r['me'] === $bot['id'], 'action jouée au nom du joueur test');
+$g = room_read($code)['g'];
+check(isset($g['votes'][$bot['id']]) && !isset($g['votes'][1]), 'le vote compte pour le joueur test, pas pour l\'hôte');
+
 @unlink($db);
 @unlink($cfg);
 echo $failures ? "$failures échec(s)\n" : "Tous les tests passent.\n";

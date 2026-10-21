@@ -108,6 +108,10 @@ button.inline { width: auto; padding: 10px 14px; font-size: 15px; font-weight: 6
 .chips { display: flex; gap: 8px; flex-wrap: wrap; }
 .chip { padding: 6px 12px; border-radius: 999px; background: var(--card2); font-size: 14px; font-weight: 600; }
 
+.as-bar { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 12px; border: 1px dashed var(--accent); }
+.as-bar .chip { width: auto; padding: 6px 12px; color: var(--text); }
+.as-bar .chip.on { background: var(--accent); color: var(--on-accent); }
+
 .divider { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 14px; }
 .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--card2); }
 
