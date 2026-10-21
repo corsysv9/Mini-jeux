@@ -6,7 +6,11 @@ jobs:
   diag:
     runs-on: ubuntu-latest
     steps:
-      - name: Proxy
+      - name: Jeux
         run: |
-          curl -sS -m 20 https://cluster129.hosting.ovh.net/ -H "Host: jellykb.cluster129.hosting.ovh.net" | grep -o "<title>[^<]*" || true
-          curl -sS -m 20 https://cluster129.hosting.ovh.net/api/index.php -H "Host: jellykb.cluster129.hosting.ovh.net" -H 'Content-Type: application/json' -d '{"action":"state","code":"ZZZZZ"}' || true
+          curl -sS -m 20 -o /tmp/b -w "page %{http_code}\n" https://jeux.jellyker.fr/ || true
+          grep -o "<title>[^<]*" /tmp/b || true
+          curl -sS -m 20 https://jeux.jellyker.fr/api/index.php -H 'Content-Type: application/json' -d '{"action":"create","name":"Verif"}' | head -c 200 || true
+          echo
+          curl -sS -m 20 -o /dev/null -w "app.js %{http_code}\n" https://jeux.jellyker.fr/assets/app.js?v=3 || true
+          curl -sS -m 20 https://jellyker.fr/ | grep -o "ouvert: true, href: '[^']*'" || true
