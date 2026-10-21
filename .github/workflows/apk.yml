@@ -1,0 +1,73 @@
+# Construit l'APK Android : onglet Actions > « APK Android » > Run workflow.
+# L'appli ouvre simplement le site : indique son adresse (ou définis la variable APP_URL du dépôt).
+name: APK Android
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Adresse du site (ex. https://jeux.jellyker.fr)"
+        required: false
+  push:
+    tags: ["v*"]
+  pull_request:
+    paths: ["android-app/**", ".github/workflows/apk.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    env:
+      APP_URL: ${{ inputs.url || vars.APP_URL || 'https://jellyker.fr' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Préparer le projet Capacitor
+        working-directory: android-app
+        run: |
+          npm install
+          mkdir -p www && cp -r ../www/assets ../www/index.html www/
+          cat > capacitor.config.json <<JSON
+          {
+            "appId": "fr.jellyker.minijeux",
+            "appName": "Mini-jeux",
+            "webDir": "www",
+            "server": { "url": "${APP_URL}", "cleartext": false },
+            "android": { "backgroundColor": "#16131f" }
+          }
+          JSON
+          npx cap add android
+          npx cap sync android
+
+      - name: Icône et écran de démarrage
+        working-directory: android-app
+        run: cp -r res/. android/app/src/main/res/
+
+      - name: Compiler l'APK
+        working-directory: android-app/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Renommer
+        run: cp android-app/android/app/build/outputs/apk/debug/app-debug.apk mini-jeux.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mini-jeux-apk
+          path: mini-jeux.apk
+
+      - name: Publier dans une release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: mini-jeux.apk
