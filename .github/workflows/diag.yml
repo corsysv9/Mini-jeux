@@ -6,11 +6,7 @@ jobs:
   diag:
     runs-on: ubuntu-latest
     steps:
-      - name: Hub
+      - name: DNS
         run: |
-          curl -sS -m 20 -D - -o /tmp/b https://jellyker.fr/ || true
-          wc -c /tmp/b || true
-          head -c 300 /tmp/b || true; grep -c jellykb /tmp/b || true
-          echo; grep -n "nom: 'Mini-jeux'" /tmp/b | cut -c1-300 || true
-          curl -sS -m 20 -o /dev/null -w "media %{http_code}\n" https://jellyker.fr/media/banniere-jeux.webp || true
-# 1792610032
+          for h in jeux minijeux mini-jeux games game jeu party soiree fun play arcade; do echo "$h: $(dig +short A $h.jellyker.fr @dns111.ovh.net | tr '\n' ' ')"; done
+          dig +short AXFR jellyker.fr @dns111.ovh.net | head || true
