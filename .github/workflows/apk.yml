@@ -10,6 +10,8 @@ on:
         required: false
   push:
     tags: ["v*"]
+  pull_request:
+    paths: ["android-app/**", ".github/workflows/apk.yml"]
 
 permissions:
   contents: write
