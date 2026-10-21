@@ -13,3 +13,4 @@ jobs:
           head -c 300 /tmp/b || true; grep -c jellykb /tmp/b || true
           echo; grep -n "nom: 'Mini-jeux'" /tmp/b | cut -c1-300 || true
           curl -sS -m 20 -o /dev/null -w "media %{http_code}\n" https://jellyker.fr/media/banniere-jeux.webp || true
+# 1792610032
