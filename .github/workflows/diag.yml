@@ -6,8 +6,7 @@ jobs:
   diag:
     runs-on: ubuntu-latest
     steps:
-      - name: Cert
+      - name: Proxy
         run: |
-          curl -sS -m 20 -o /dev/null -w "verifie %{http_code}\n" https://jellykb.cluster129.hosting.ovh.net/ || true
-          echo | openssl s_client -connect jellykb.cluster129.hosting.ovh.net:443 -servername jellykb.cluster129.hosting.ovh.net 2>/dev/null | openssl x509 -noout -subject -ext subjectAltName 2>/dev/null | head -5 || true
-          curl -sS -m 20 -o /dev/null -w "http %{http_code}\n" http://jellykb.cluster129.hosting.ovh.net/ || true
+          curl -sS -m 20 https://cluster129.hosting.ovh.net/ -H "Host: jellykb.cluster129.hosting.ovh.net" | grep -o "<title>[^<]*" || true
+          curl -sS -m 20 https://cluster129.hosting.ovh.net/api/index.php -H "Host: jellykb.cluster129.hosting.ovh.net" -H 'Content-Type: application/json' -d '{"action":"state","code":"ZZZZZ"}' || true
