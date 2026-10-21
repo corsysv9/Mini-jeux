@@ -8,7 +8,20 @@ Trois façons de jouer, cumulables : sur l'hébergement OVH, sur le NAS, et via 
 
 ## 1. Hébergement OVH
 
-jellyker.fr pointe vers le NAS (le hub « Carte des mondes »). Les mini-jeux sont chez OVH, à l'adresse https://jellykb.cluster129.hosting.ovh.net/, et l'île Mini-jeux du hub ouvre cette adresse.
+jellyker.fr pointe vers le NAS (le hub « Carte des mondes »). Les mini-jeux sont chez OVH. Leur adresse publique est https://jeux.jellyker.fr : le Caddy du NAS reçoit cette adresse (certificat HTTPS automatique) et la transmet à OVH. L'île Mini-jeux du hub ouvre cette adresse.
+
+Bloc à mettre dans le Caddyfile principal du NAS (l'enregistrement DNS `jeux` pointe vers la box, comme jellyker.fr) :
+
+```
+jeux.jellyker.fr {
+    encode zstd gzip
+    reverse_proxy https://cluster129.hosting.ovh.net {
+        header_up Host jellykb.cluster129.hosting.ovh.net
+    }
+}
+```
+
+Le certificat d'OVH ne couvre que `cluster129.hosting.ovh.net`, d'où la connexion à ce nom avec l'en-tête Host de l'hébergement.
 
 Le plus simple pour jouer avec des amis où qu'ils soient : HTTPS et nom de domaine sont déjà là.
 **Aucune base de données à acheter** : le site range les parties dans un petit fichier (SQLite) qu'il crée tout seul.

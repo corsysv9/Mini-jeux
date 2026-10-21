@@ -20,7 +20,7 @@ jobs:
   apk:
     runs-on: ubuntu-latest
     env:
-      APP_URL: ${{ inputs.url || vars.APP_URL || 'https://jellykb.cluster129.hosting.ovh.net' }}
+      APP_URL: ${{ inputs.url || vars.APP_URL || 'https://jeux.jellyker.fr' }}
     steps:
       - uses: actions/checkout@v4
 
