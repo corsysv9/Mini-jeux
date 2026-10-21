@@ -325,3 +325,16 @@ body.tb3d .as-bar { background: rgba(22, 19, 31, .78); align-self: flex-start; }
 .tb3d-caption.gold { background: rgba(245, 184, 61, .94); color: var(--on-accent); }
 .tb-panel .banner big { font-size: 24px; }
 .tb-panel .banner { padding: 12px; gap: 2px; }
+
+/* Time Bomb : choix de la carte à couper (dos de carte) */
+.cardpick { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.cardpick button {
+  width: 46px;
+  height: 66px;
+  padding: 0;
+  border-radius: 8px;
+  background: #6b2a2a repeating-linear-gradient(45deg, rgba(245, 184, 61, .18) 0 4px, transparent 4px 9px);
+  border: 2px solid rgba(245, 184, 61, .55);
+  transition: transform .15s;
+}
+.cardpick button.on { transform: translateY(-8px); border-color: var(--accent); box-shadow: 0 6px 16px rgba(245, 184, 61, .4); }

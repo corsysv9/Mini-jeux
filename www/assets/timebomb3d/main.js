@@ -390,7 +390,7 @@ export function createTimeBomb3D(opts) {
         const off = (k - (c - 1) / 2) * step + step * 0.6;
         card.pos.copy(u).multiplyScalar(W.handR).addScaledVector(t, off);
         card.pos.y = M.TABLE_Y + 0.003 + k * 0.0004;
-        if (S.selected === id && S.selSlot === k) card.pos.y += 0.05;
+        if (S.selected === id && S.selSlot === k) card.pos.y += 0.08;
         flatQuat(a, false, card.quat);
         card.scale = 1;
         card.inCamera = false;
@@ -1331,8 +1331,18 @@ export function createTimeBomb3D(opts) {
     changed();
   }
 
+  // Ordre des cartes du joueur visé, de gauche à droite à l'écran (pour les boutons).
+  function slotOrder(id) {
+    const hand = S.world && S.world.hands[id];
+    if (!hand) return [];
+    camera.updateWorldMatrix(true, false);
+    return hand.map((c, k) => ({ k, x: c.pos.clone().project(camera).x })).sort((a, b) => a.x - b.x).map((o) => o.k);
+  }
+
   function view() {
     return {
+      selSlot: S.selSlot,
+      slots: S.selected !== null ? slotOrder(S.selected) : [],
       g: S.shown,
       n: S.n,
       lifted: S.lifted,
@@ -1357,7 +1367,7 @@ export function createTimeBomb3D(opts) {
   return {
     show,
     view,
-    select: (id) => select(id),
+    select: (id, k) => select(id, k),
     confirmCut,
     toggleHand,
     sound,

@@ -31,6 +31,7 @@ const S = {
   installPrompt: null,
   apk: false,
   as: null, // mode test : id du joueur test incarné par l'hôte
+  tbTarget: null, // Time Bomb 2D : joueur choisi avant de choisir sa carte
 };
 
 const app = document.getElementById('app');
@@ -112,6 +113,8 @@ function setRoom(room) {
   // Nouvelle partie : les cartes secrètes sont recachées.
   const newGame = !prev || prev.status !== room.status || (prev.g && room.g && prev.g.phase === 'end' && room.g.phase !== 'end');
   if (newGame) S.reveal = {};
+  // La pince a changé de main : le choix de cible en cours n'a plus lieu d'être.
+  if (newGame || !prev || !prev.g || !room.g || prev.g.pincers !== room.g.pincers || prev.me !== room.me) S.tbTarget = null;
   render();
 }
 
@@ -154,7 +157,7 @@ function tb3dWanted() {
 
 function loadTB3D() {
   if (!TB3D.loading) {
-    TB3D.loading = import(new URL('assets/timebomb3d/main.js?v=1', document.baseURI).href)
+    TB3D.loading = import(new URL('assets/timebomb3d/main.js?v=2', document.baseURI).href)
       .then((mod) => { TB3D.mod = mod; })
       .catch(() => { TB3D.failed = true; });
   }
@@ -528,9 +531,10 @@ function viewTimeBomb3D() {
     : `<p class="center small">${name(S.room.hostId)} peut relancer une partie.</p>`}`;
   } else if (v.canCut) {
     const targets = allIds().filter((id) => id !== me && g.handSizes[id] > 0);
-    panel = `<div class="small"><b>Tu as la pince.</b> Choisis chez qui couper (ou touche une carte).</div>
+    panel = `<div class="small"><b>Tu as la pince.</b> Choisis un joueur puis la carte à couper (tu peux aussi toucher la carte).</div>
       <div class="chips">${targets.map((id) => `<button class="chip ${v.selected === id ? 'on' : ''}" data-act="tb_pick" data-id="${id}">${name(id)}</button>`).join('')}</div>
-      ${v.selected !== null ? `<button class="big" data-act="tb_confirm">${ICONS.scissors} Couper chez ${name(v.selected)}</button>` : ''}`;
+      ${v.selected !== null ? `<div class="cardpick">${v.slots.map((k) => `<button class="${v.selSlot === k ? 'on' : ''}" data-act="tb_slot" data-slot="${k}" aria-label="Carte ${k + 1}"></button>`).join('')}</div>
+      <button class="big" data-act="tb_confirm">${ICONS.scissors} Couper cette carte</button>` : ''}`;
   } else if (v.pending) {
     panel = '<div class="small center">Coupe en cours…</div>';
   } else if (!v.busy && g.phase === 'play') {
@@ -582,10 +586,16 @@ function viewTimeBomb(g) {
     ? `<div class="banner accent">${ICONS.scissors}<span>Tu as la pince : touche un joueur pour couper une de ses cartes.</span></div>`
     : `<div class="banner">${name(g.pincers)} a la pince.</div>`;
   html += items(allIds(), {
-    act: mine ? 'tb_cut' : null,
+    act: mine ? 'tb_target' : null,
+    selected: mine ? S.tbTarget : null,
     pick: (id) => id !== me && g.handSizes[id] > 0,
     right: (id) => `<span class="pips">${'<i></i>'.repeat(g.handSizes[id] || 0)}</span>`,
   });
+  const t = S.tbTarget;
+  if (mine && t !== null && t !== undefined && t !== me && g.handSizes[t] > 0) {
+    html += `<div class="section">Quelle carte de ${name(t)} ?</div>
+      <div class="cardpick">${Array.from({ length: g.handSizes[t] }, (_, k) => `<button data-act="tb_cut" data-id="${t}" data-slot="${k}" aria-label="Carte ${k + 1}"></button>`).join('')}</div>`;
+  }
   if (g.revealed.length > 1) {
     html += `<div class="section">Cartes révélées</div><div class="log">${g.revealed.slice(0, -1).reverse().map((x) =>
       `<div>Manche ${x.round} · chez ${name(x.from)} : <span class="badge ${TB_CARDS[x.card][1]}">${TB_CARDS[x.card][0]}</span></div>`).join('')}</div>`;
@@ -810,7 +820,7 @@ const handlers = {
   uc_close: () => { if (confirm('Clôturer le vote maintenant ?')) play('close_vote'); },
   uc_guess: () => { const w = draft('guess').trim(); if (w) { play('guess', { word: w }); S.draft.guess = ''; } },
   uc_next: () => play('next'),
-  tb_cut: (el) => play('cut', { target: Number(el.dataset.id) }),
+  tb_cut: (el) => { S.tbTarget = null; play('cut', { target: Number(el.dataset.id), slot: Number(el.dataset.slot) }); },
   tb_view: (el) => {
     try { localStorage.setItem('mj_tb3d', el.dataset.mode); } catch (e) { /* ignoré */ }
     render();
@@ -820,7 +830,9 @@ const handlers = {
     const id = Number(el.dataset.id);
     TB3D.inst.select(TB3D.inst.view().selected === id ? null : id);
   },
+  tb_slot: (el) => TB3D.inst.select(TB3D.inst.view().selected, Number(el.dataset.slot)),
   tb_confirm: () => TB3D.inst.confirmCut(),
+  tb_target: (el) => { const id = Number(el.dataset.id); S.tbTarget = S.tbTarget === id ? null : id; render(); },
   lg_wolf: (el) => play('wolf_vote', { target: Number(el.dataset.id) }),
   lg_seer: (el) => play('seer', { target: Number(el.dataset.id) }),
   lg_seer_ok: () => play('seer_ok'),

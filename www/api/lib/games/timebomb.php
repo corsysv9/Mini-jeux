@@ -60,18 +60,18 @@ function tb_action(array &$g, $pid, $type, array $in, $isHost)
     if ($target === $pid || !isset($g['hands'][$target]) || !$g['hands'][$target]) {
         throw new GameError('Choisis la carte d\'un autre joueur.');
     }
-    // Les cartes sont face cachée et mélangées : on en tire une au hasard.
+    // Les cartes sont posées face cachée, mélangées à chaque distribution : personne, pas même
+    // leur propriétaire, ne sait laquelle est où. Celui qui a la pince choisit la place ;
+    // sans choix (ancienne interface), on en prend une au hasard.
     $hand = $g['hands'][$target];
-    $i = random_int(0, count($hand) - 1);
-    $card = $hand[$i];
-    array_splice($hand, $i, 1);
-    $g['hands'][$target] = $hand;
-    $entry = ['card' => $card, 'from' => $target, 'by' => $pid, 'round' => $g['round']];
-    // Place de la carte visée dans la vue 3D : purement visuel, le tirage reste au hasard.
-    if (isset($in['slot']) && is_numeric($in['slot'])) {
-        $entry['slot'] = max(0, min(7, (int) $in['slot']));
+    $slot = isset($in['slot']) && is_numeric($in['slot']) ? (int) $in['slot'] : -1;
+    if ($slot < 0 || $slot >= count($hand)) {
+        $slot = random_int(0, count($hand) - 1);
     }
-    $g['revealed'][] = $entry;
+    $card = $hand[$slot];
+    array_splice($hand, $slot, 1);
+    $g['hands'][$target] = $hand;
+    $g['revealed'][] = ['card' => $card, 'from' => $target, 'by' => $pid, 'round' => $g['round'], 'slot' => $slot];
     $g['pincers'] = $target;
     $g['cuts']++;
 
