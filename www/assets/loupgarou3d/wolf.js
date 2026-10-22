@@ -1,8 +1,8 @@
 // Le loup : un grand loup gris articulé (pattes à trois segments, queue, mâchoire), avec ses allures.
 // Corps modelé par sections (poitrail profond, taille fine, croupe), pelage en couches de poils.
 import * as THREE from '../vendor/three.min.js?v=2';
-import * as TX from './textures.js';
-import { V, TAU, once, Parts } from './geo.js';
+import * as TX from './textures.js?v=2';
+import { V, TAU, once, Parts } from './geo.js?v=2';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 

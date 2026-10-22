@@ -157,7 +157,7 @@ function tb3dWanted() {
 
 function loadTB3D() {
   if (!TB3D.loading) {
-    TB3D.loading = import(new URL('assets/timebomb3d/main.js?v=3', document.baseURI).href)
+    TB3D.loading = import(new URL('assets/timebomb3d/main.js?v=4', document.baseURI).href)
       .then((mod) => { TB3D.mod = mod; })
       .catch(() => { TB3D.failed = true; });
   }
@@ -210,7 +210,7 @@ function lg3dWanted() {
 
 function loadLG3D() {
   if (!LG3D.loading) {
-    LG3D.loading = import(new URL('assets/loupgarou3d/main.js?v=2', document.baseURI).href)
+    LG3D.loading = import(new URL('assets/loupgarou3d/main.js?v=3', document.baseURI).href)
       .then((mod) => { LG3D.mod = mod; })
       .catch((e) => { console.error('Loup-garou 3D :', e); LG3D.failed = true; });
   }

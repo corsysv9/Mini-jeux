@@ -1,10 +1,10 @@
 // Time Bomb en 3D : la salle des horloges de Big Ben, vue à la 1ère personne.
 // Le serveur reste la référence ; cette scène rejoue à son rythme les cartes révélées.
 import * as THREE from '../vendor/three.min.js?v=2';
-import * as M from './models.js';
-import * as TX from './textures.js';
-import { createAudio } from './audio.js';
-import { createFx } from './fx.js';
+import * as M from './models.js?v=2';
+import * as TX from './textures.js?v=2';
+import { createAudio } from './audio.js?v=2';
+import { createFx } from './fx.js?v=2';
 
 const TAU = Math.PI * 2;
 const COLORS = ['#7a4fd0', '#2f7d8a', '#a3532a', '#3f7d4e', '#2f5d8a', '#a33a6b', '#6b6b2a', '#8a4f2f'];
