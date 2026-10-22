@@ -2,13 +2,13 @@
 // Le serveur reste la référence ; la scène rejoue à son rythme les morts du journal
 // (le loup qui emporte sa victime, le bannissement, le coup de fusil du chasseur).
 import * as THREE from '../vendor/three.min.js?v=2';
-import * as TX from './textures.js';
-import * as WD from './world.js';
-import { buildVillager, wolfify, buildGrave } from './people.js';
-import { buildWolf, poseWolf, mouthPos, WOLF_RIM } from './wolf.js';
-import { createAudio } from './audio.js';
-import { createFx } from './fx.js';
-import { V, TAU } from './geo.js';
+import * as TX from './textures.js?v=2';
+import * as WD from './world.js?v=2';
+import { buildVillager, wolfify, buildGrave } from './people.js?v=2';
+import { buildWolf, poseWolf, mouthPos, WOLF_RIM } from './wolf.js?v=2';
+import { createAudio } from './audio.js?v=2';
+import { createFx } from './fx.js?v=2';
+import { V, TAU } from './geo.js?v=2';
 
 const COLORS = ['#7a4fd0', '#2f7d8a', '#a3532a', '#3f7d4e', '#2f5d8a', '#a33a6b', '#6b6b2a', '#8a4f2f'];
 const ROLE = TX.ROLE_INFO;

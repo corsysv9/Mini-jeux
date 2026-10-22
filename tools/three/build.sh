@@ -3,6 +3,7 @@
 # Si un module de www/assets/timebomb3d ou loupgarou3d utilise une nouvelle classe THREE.Xxx, l'ajouter à entry.js.
 # Après reconstruction, changer le ?v= des imports « ../vendor/three.min.js?v=N » (même valeur partout),
 # sinon les navigateurs peuvent garder l'ancienne version en cache.
+# Les imports entre modules 3D portent aussi un ?v= (même valeur partout) : l'augmenter quand un module change.
 set -e
 cd "$(dirname "$0")"
 npm install --no-audit --no-fund

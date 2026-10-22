@@ -1,9 +1,9 @@
 // Les villageois : assis sur leur rondin, articulés (hanches, genoux, épaules, coudes, tête)
 // pour dormir, se réchauffer les mains, désigner un suspect, se lever, tomber ou être emportés.
 import * as THREE from '../vendor/three.min.js?v=2';
-import * as TX from './textures.js';
-import { V, TAU, once, Parts, lathe } from './geo.js';
-import { SEAT_Y } from './world.js';
+import * as TX from './textures.js?v=2';
+import { V, TAU, once, Parts, lathe } from './geo.js?v=2';
+import { SEAT_Y } from './world.js?v=2';
 
 const SKINS = [0xe8b896, 0xc98e66, 0xa8714c, 0x7a4e32, 0xf0cfb0, 0xb87d58, 0x5e3a24, 0xdcaa84];
 const HAIRS = [0x2b1d14, 0x6a4024, 0xb07a3a, 0x151515, 0x7a3518, 0xc8b070, 0x3b2a20, 0x8a8a8a];

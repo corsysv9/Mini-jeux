@@ -1,8 +1,8 @@
 // Le décor : clairière, feu de camp, forêt de sapins, vallée et village au loin, ciel de nuit ou de jour.
 // Tout est construit autour du feu (origine) ; la vallée s'ouvre vers -z, face à ma place.
 import * as THREE from '../vendor/three.min.js?v=2';
-import * as TX from './textures.js';
-import { V, TAU, once, Parts, lathe, rock, windy } from './geo.js';
+import * as TX from './textures.js?v=2';
+import { V, TAU, once, Parts, lathe, rock, windy } from './geo.js?v=2';
 
 export const SEAT_Y = 0.37; // dessus des rondins
 export const VISTA = 0.42; // demi-angle de la trouée vers la vallée (radians)

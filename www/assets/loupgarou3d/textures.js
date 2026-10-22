@@ -1,5 +1,5 @@
 // Textures du Loup-garou, dessinées au canvas : aucune image à télécharger.
-import { rng, texture, reliefTexture, softDot, fabric } from '../timebomb3d/textures.js';
+import { rng, texture, reliefTexture, softDot, fabric } from '../timebomb3d/textures.js?v=2';
 
 export { rng, texture, reliefTexture, softDot, fabric };
 
