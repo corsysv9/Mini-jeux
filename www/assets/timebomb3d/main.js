@@ -1,6 +1,6 @@
 // Time Bomb en 3D : la salle des horloges de Big Ben, vue à la 1ère personne.
 // Le serveur reste la référence ; cette scène rejoue à son rythme les cartes révélées.
-import * as THREE from '../vendor/three.min.js';
+import * as THREE from '../vendor/three.min.js?v=2';
 import * as M from './models.js';
 import * as TX from './textures.js';
 import { createAudio } from './audio.js';
