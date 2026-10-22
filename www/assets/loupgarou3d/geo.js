@@ -1,5 +1,5 @@
 // Petits outils de modélisation partagés par le décor, les villageois et le loup.
-import * as THREE from '../vendor/three.min.js';
+import * as THREE from '../vendor/three.min.js?v=2';
 
 export const V = (x, y, z) => new THREE.Vector3(x, y, z);
 export const TAU = Math.PI * 2;

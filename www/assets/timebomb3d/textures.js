@@ -1,5 +1,5 @@
 // Textures dessinées au canvas : aucune image à télécharger.
-import * as THREE from '../vendor/three.min.js';
+import * as THREE from '../vendor/three.min.js?v=2';
 
 export const CARD_W = 256;
 export const CARD_H = 360;

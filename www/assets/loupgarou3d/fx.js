@@ -1,5 +1,5 @@
 // Effets : flammes du feu (shader), étincelles, fumée, lucioles, brume, poussière, coup de fusil.
-import * as THREE from '../vendor/three.min.js';
+import * as THREE from '../vendor/three.min.js?v=2';
 import * as TX from './textures.js';
 import { V, TAU } from './geo.js';
 

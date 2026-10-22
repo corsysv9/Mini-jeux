@@ -1,7 +1,7 @@
 // Loup-garou en 3D : veillée autour d'un feu de camp, dans une clairière, la nuit.
 // Le serveur reste la référence ; la scène rejoue à son rythme les morts du journal
 // (le loup qui emporte sa victime, le bannissement, le coup de fusil du chasseur).
-import * as THREE from '../vendor/three.min.js';
+import * as THREE from '../vendor/three.min.js?v=2';
 import * as TX from './textures.js';
 import * as WD from './world.js';
 import { buildVillager, wolfify, buildGrave } from './people.js';

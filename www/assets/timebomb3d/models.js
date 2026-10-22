@@ -1,6 +1,6 @@
 // Objets de la scène : salle des horloges, table, personnages, pince, bombe, cartes.
 // Les pièces fixes sont fusionnées par matériau pour limiter les appels de dessin.
-import * as THREE from '../vendor/three.min.js';
+import * as THREE from '../vendor/three.min.js?v=2';
 import * as TX from './textures.js';
 
 export const TABLE_Y = 0.76;

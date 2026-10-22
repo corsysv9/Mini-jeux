@@ -157,7 +157,7 @@ function tb3dWanted() {
 
 function loadTB3D() {
   if (!TB3D.loading) {
-    TB3D.loading = import(new URL('assets/timebomb3d/main.js?v=2', document.baseURI).href)
+    TB3D.loading = import(new URL('assets/timebomb3d/main.js?v=3', document.baseURI).href)
       .then((mod) => { TB3D.mod = mod; })
       .catch(() => { TB3D.failed = true; });
   }
@@ -210,9 +210,9 @@ function lg3dWanted() {
 
 function loadLG3D() {
   if (!LG3D.loading) {
-    LG3D.loading = import(new URL('assets/loupgarou3d/main.js?v=1', document.baseURI).href)
+    LG3D.loading = import(new URL('assets/loupgarou3d/main.js?v=2', document.baseURI).href)
       .then((mod) => { LG3D.mod = mod; })
-      .catch(() => { LG3D.failed = true; });
+      .catch((e) => { console.error('Loup-garou 3D :', e); LG3D.failed = true; });
   }
   return LG3D.loading;
 }
@@ -238,6 +238,7 @@ function syncLG3D() {
         onAct: (type, data) => play(type, data),
       });
     } catch (e) {
+      console.error('Loup-garou 3D :', e);
       LG3D.failed = true;
       toast('Vue 3D indisponible sur cet appareil.');
       return false;
@@ -779,7 +780,8 @@ function viewLoupGarou(g) {
   const known = lgKnownRoles(g);
   const others = g.alive.filter((id) => id !== me);
   const sleeping = '<div class="note-box">Garde les yeux fermés… Touche quand même ton téléphone pour ne trahir personne.</div>';
-  let html = LG3D.failed ? '' : '<button class="secondary" data-act="lg_view" data-mode="1">Passer en vue 3D (la veillée)</button>';
+  // Toujours proposé : après un échec (réseau, mise à jour en cours), on peut réessayer.
+  let html = '<button class="secondary" data-act="lg_view" data-mode="1">Passer en vue 3D (la veillée)</button>';
 
   if (g.phase !== 'end') {
     const pack = g.myRole === 'wolf' && g.wolves.length > 1 ? `Ta meute : ${g.wolves.filter((id) => id !== me).map(name).join(', ')}.` : '';
@@ -981,6 +983,10 @@ const handlers = {
   lg_force: () => { if (confirm('Forcer la suite ? Les joueurs qui n\'ont pas agi seront ignorés.')) play('force'); },
   lg_view: (el) => {
     try { localStorage.setItem('mj_lg3d', el.dataset.mode); } catch (e) { /* ignoré */ }
+    if (el.dataset.mode === '1' && LG3D.failed) {
+      LG3D.failed = false;
+      LG3D.loading = null;
+    }
     render();
   },
   lg3d_sound: () => LG3D.inst.sound(!LG3D.inst.view().sound),

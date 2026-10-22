@@ -1,5 +1,5 @@
 // Effets : étincelles, feu, fumée, débris, éclats de verre, confettis.
-import * as THREE from '../vendor/three.min.js';
+import * as THREE from '../vendor/three.min.js?v=2';
 import * as TX from './textures.js';
 import { ROOM, TABLE_Y } from './models.js';
 
