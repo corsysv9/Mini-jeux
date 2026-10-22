@@ -1,6 +1,6 @@
 #!/bin/sh
 # Reconstruit www/assets/vendor/three.min.js à partir de entry.js.
-# Si un module de www/assets/timebomb3d utilise une nouvelle classe THREE.Xxx, l'ajouter à entry.js.
+# Si un module de www/assets/timebomb3d ou loupgarou3d utilise une nouvelle classe THREE.Xxx, l'ajouter à entry.js.
 set -e
 cd "$(dirname "$0")"
 npm install --no-audit --no-fund

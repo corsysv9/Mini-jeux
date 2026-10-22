@@ -6,6 +6,8 @@ const base = process.argv[2] || 'http://127.0.0.1:8099';
 const out = process.argv[3] || 'captures';
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+// Ce test lit les rôles dans l'interface 2D (la veillée en 3D a son propre test).
+await page.addInitScript(() => localStorage.setItem('mj_lg3d', '0'));
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 const shot = (file) => page.screenshot({ path: `${out}/${file}.png`, fullPage: true });

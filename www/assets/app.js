@@ -198,6 +198,58 @@ function syncTB3D() {
   return true;
 }
 
+// ---------- Loup-garou en 3D : la veillée autour du feu (chargée seulement quand on en a besoin) ----------
+
+const LG3D = { mod: null, inst: null, loading: null, failed: false, shown: null };
+
+function lg3dWanted() {
+  let pref = '1';
+  try { pref = localStorage.getItem('mj_lg3d') || '1'; } catch (e) { /* stockage indisponible */ }
+  return pref === '1' && !LG3D.failed;
+}
+
+function loadLG3D() {
+  if (!LG3D.loading) {
+    LG3D.loading = import(new URL('assets/loupgarou3d/main.js?v=1', document.baseURI).href)
+      .then((mod) => { LG3D.mod = mod; })
+      .catch(() => { LG3D.failed = true; });
+  }
+  return LG3D.loading;
+}
+
+// Affiche (ou cache) la veillée selon l'état du salon ; renvoie true si elle est visible.
+function syncLG3D() {
+  const r = S.room;
+  const want = !!(r && r.status !== 'lobby' && r.game === 'loupgarou' && r.g && lg3dWanted() && r.players.some((p) => p.id === r.me));
+  if (!want) {
+    if (LG3D.inst && LG3D.shown) LG3D.inst.show(null);
+    LG3D.shown = null;
+    return false;
+  }
+  if (!LG3D.mod) {
+    loadLG3D().then(render);
+    return false;
+  }
+  if (!LG3D.inst) {
+    try {
+      LG3D.inst = LG3D.mod.createLoupGarou3D({
+        style: 'realiste',
+        onChange: () => render(),
+        onAct: (type, data) => play(type, data),
+      });
+    } catch (e) {
+      LG3D.failed = true;
+      toast('Vue 3D indisponible sur cet appareil.');
+      return false;
+    }
+  }
+  if (LG3D.shown !== r) {
+    LG3D.shown = r;
+    LG3D.inst.show(r);
+  }
+  return true;
+}
+
 // ---------- Rendu ----------
 
 function render() {
@@ -206,20 +258,25 @@ function render() {
   let html;
   let night = false;
   const in3d = syncTB3D();
+  const inLg3d = syncLG3D();
   if (!S.session) html = viewHome();
   else if (!S.room) html = '<p class="center muted">Connexion au salon…</p>';
   else if (S.room.status === 'lobby') {
     html = viewLobby();
     if (S.room.game === 'timebomb' && tb3dWanted()) loadTB3D(); // préchargement pendant qu'on attend
+    if (S.room.game === 'loupgarou' && lg3dWanted()) loadLG3D();
   } else if (in3d) html = viewTimeBomb3D();
+  else if (inLg3d) html = viewLoupGarou3D();
   else if (S.room.game === 'timebomb' && tb3dWanted() && !TB3D.mod) html = '<p class="center muted">Ouverture de Big Ben…</p>';
+  else if (S.room.game === 'loupgarou' && lg3dWanted() && !LG3D.mod) html = '<p class="center muted">On allume le feu de camp…</p>';
   else {
     html = viewGame();
     night = S.room.game === 'loupgarou' && ['night', 'witch'].includes(S.room.g.phase);
   }
   document.body.classList.toggle('night', night);
   document.body.classList.toggle('tb3d', in3d);
-  document.querySelector('meta[name=theme-color]').content = in3d ? '#070a1f' : (night ? '#101a3a' : '#16131f');
+  document.body.classList.toggle('lg3d', inLg3d);
+  document.querySelector('meta[name=theme-color]').content = in3d ? '#070a1f' : (inLg3d ? '#03050d' : (night ? '#101a3a' : '#16131f'));
   app.innerHTML = html;
   if (focused) {
     const el = document.getElementById(focused);
@@ -640,13 +697,89 @@ function phaseTitle(icon, title, sub) {
   return `<div class="phase">${icon}<span><span class="heading">${title}</span>${sub ? `<span class="small muted">${sub}</span>` : ''}</span></div>`;
 }
 
+// Interface posée sur la veillée en 3D. Elle suit l'état affiché (en retard sur le serveur le temps
+// des animations) : on ne dévoile pas un mort avant que le loup soit venu le chercher.
+function viewLoupGarou3D() {
+  const v = LG3D.inst.view();
+  const g = v.g;
+  if (!g) return '';
+  const full = S.room.g;
+  const me = S.room.me;
+  const night = g.phase === 'night' || g.phase === 'witch';
+  const chips = (ids, label) => `<div class="chips">${ids.map((id) =>
+    `<button class="chip ${v.selected === id ? 'on' : ''}" data-act="lg3d_pick" data-id="${id}">${name(id)}${label ? label(id) : ''}</button>`).join('')}</div>`;
+  let html = `<div class="tb-top">
+    <div class="tb-stats"><span>${g.phase === 'end' ? '<b>Fin</b>de partie' : `<b>${g.night}</b>${night ? 'nuit' : 'jour'}`}</span><span><b>${g.alive.length}/${S.room.players.length}</b>en vie</span></div>
+    <div class="tb-tools">
+      <button class="tb-btn" data-act="lg3d_sound" aria-label="${v.sound ? 'Couper le son' : 'Activer le son'}">${v.sound ? ICONS.sound : ICONS.mute}</button>
+      <button class="tb-btn" data-act="lg_view" data-mode="0" aria-label="Passer en vue 2D">2D</button>
+      ${isHost() ? '<button class="tb-btn" data-act="lobby">Salon</button>' : ''}
+    </div></div>
+    ${asBar()}`;
+  let panel = '';
+  if (v.ended) {
+    const won = (g.winner === 'wolves') === (full.myRole === 'wolf');
+    const roles = full.roles || {};
+    panel = `${endBanner(won, won ? 'Victoire' : 'Défaite', g.winner === 'wolves' ? 'Les loups-garous gagnent !' : 'Le village gagne !')}
+      <div class="chips tb-roles">${allIds().map((id) => `<span class="chip ${roles[id] === 'wolf' ? 'red' : 'blue'}">${name(id)}${id === me ? ' (toi)' : ''} · ${roles[id] ? LG_ROLES[roles[id]].name : '?'}</span>`).join('')}</div>
+      ${isHost()
+    ? '<button class="big" data-act="start">Rejouer</button><button class="secondary" data-act="lobby">Changer de jeu</button>'
+    : `<p class="center small">${name(S.room.hostId)} peut relancer une partie.</p>`}`;
+  } else if (v.busy || !g.done) {
+    panel = '';
+  } else if (v.pending) {
+    panel = '<div class="small center">Envoi…</div>';
+  } else if (g.phase === 'hunter') {
+    panel = g.hunter === me
+      ? `<div class="small"><b>Tu étais le chasseur.</b> Avant de mourir, choisis qui tu emportes avec toi.</div>${chips(v.canPick)}
+        ${v.selected !== null ? `<button class="big" data-act="lg3d_confirm">Tirer sur ${name(v.selected)}</button>` : ''}`
+      : `<div class="small center"><b>${name(g.hunter)}</b> était le chasseur : il épaule son fusil…</div>`;
+  } else if (!g.meAlive) {
+    panel = '<div class="small center">Tu es mort : tu vois tous les rôles, mais chut !</div>';
+  } else if (g.phase === 'night' && full.myRole === 'wolf') {
+    const votes = full.wolfVotes || {};
+    const count = tally(votes);
+    const pack = (full.wolves || []).filter((id) => id !== me);
+    panel = `<div class="small"><b>Choisissez votre victime.</b> Toute la meute doit désigner la même personne${pack.length ? ` (avec ${pack.map(name).join(', ')})` : ''}.</div>
+      ${chips(v.canPick, (id) => (count[id] ? ` · ${count[id]}` : ''))}
+      ${v.selected !== null && votes[me] !== v.selected ? `<button class="big" data-act="lg3d_confirm">Dévorer ${name(v.selected)}</button>` : ''}
+      ${votes[me] !== undefined && votes[me] !== null ? `<div class="small center muted">Ton vote : ${name(votes[me])}</div>` : ''}`;
+  } else if (g.phase === 'night' && full.myRole === 'seer' && !full.seerDone) {
+    panel = `<div class="small"><b>Voyante :</b> choisis le joueur dont tu veux découvrir le rôle.</div>${chips(v.canPick)}
+      ${v.selected !== null ? `<button class="big" data-act="lg3d_confirm">Sonder ${name(v.selected)}</button>` : ''}`;
+  } else if (g.phase === 'night' && full.myRole === 'seer' && !full.seerRead) {
+    const last = full.seerLog[full.seerLog.length - 1];
+    panel = `<div class="small center"><b>${name(last.target)}</b> est ${LG_ROLES[last.role].name}.</div><button class="big" data-act="lg_seer_ok">J'ai vu, je me rendors</button>`;
+  } else if (g.phase === 'witch' && full.myRole === 'witch') {
+    const save = !!draft('w_save');
+    panel = `<div class="small"><b>Sorcière :</b> ${full.victim !== null ? `les loups ont attaqué <b>${name(full.victim)}</b>.` : 'les loups n\'ont attaqué personne.'}</div>
+      ${full.potions.life && full.victim !== null ? `<button class="chip ${save ? 'on' : ''}" data-act="w_save">${save ? `Potion de vie : sauver ${name(full.victim)}` : 'Potion de vie : ne pas utiliser'}</button>` : ''}
+      ${full.potions.death ? `<div class="small muted">Potion de mort : touche un joueur pour l'empoisonner (ou personne).</div>${chips(v.canPick)}` : ''}
+      <button class="big" data-act="lg3d_witch">${v.selected !== null ? `Valider (empoisonner ${name(v.selected)})` : 'Valider'}</button>`;
+  } else if (night) {
+    panel = '<div class="small center">Le village dort. Garde les yeux fermés… et touche quand même l\'écran de temps en temps pour ne trahir personne.</div>';
+  } else if (g.phase === 'day') {
+    const count = tally(g.dayVotes);
+    panel = `<div class="small"><b>Débattez</b>, puis votez pour éliminer un suspect (touchez-le).</div>
+      ${chips(v.canPick, (id) => (count[id] ? ` · ${count[id]}` : ''))}
+      ${v.selected !== null && g.myVote !== v.selected ? `<button class="big" data-act="lg3d_confirm">Voter contre ${name(v.selected)}</button>` : ''}
+      ${progress(Object.keys(g.dayVotes || {}).length, g.alive.length)}`;
+  }
+  if (isHost() && !v.ended && !v.busy && g.done) {
+    const labels = { day: 'Clôturer le vote', night: 'Forcer la fin de la nuit', witch: 'Passer la sorcière', hunter: 'Passer le chasseur' };
+    if (labels[g.phase]) panel += `<button class="ghost" data-act="lg_force">${labels[g.phase]} (hôte)</button>`;
+  }
+  if (panel) html += `<div class="tb-panel ${v.ended ? 'end' : ''}">${panel}</div>`;
+  return html;
+}
+
 function viewLoupGarou(g) {
   const me = S.room.me;
   const alive = g.alive.includes(me);
   const known = lgKnownRoles(g);
   const others = g.alive.filter((id) => id !== me);
   const sleeping = '<div class="note-box">Garde les yeux fermés… Touche quand même ton téléphone pour ne trahir personne.</div>';
-  let html = '';
+  let html = LG3D.failed ? '' : '<button class="secondary" data-act="lg_view" data-mode="1">Passer en vue 3D (la veillée)</button>';
 
   if (g.phase !== 'end') {
     const pack = g.myRole === 'wolf' && g.wolves.length > 1 ? `Ta meute : ${g.wolves.filter((id) => id !== me).map(name).join(', ')}.` : '';
@@ -846,6 +979,20 @@ const handlers = {
   lg_hunter: (el) => play('hunter', { target: Number(el.dataset.id) }),
   lg_vote: (el) => play('vote', { target: Number(el.dataset.id) }),
   lg_force: () => { if (confirm('Forcer la suite ? Les joueurs qui n\'ont pas agi seront ignorés.')) play('force'); },
+  lg_view: (el) => {
+    try { localStorage.setItem('mj_lg3d', el.dataset.mode); } catch (e) { /* ignoré */ }
+    render();
+  },
+  lg3d_sound: () => LG3D.inst.sound(!LG3D.inst.view().sound),
+  lg3d_pick: (el) => {
+    const id = Number(el.dataset.id);
+    LG3D.inst.select(LG3D.inst.view().selected === id ? null : id);
+  },
+  lg3d_confirm: () => LG3D.inst.confirm(),
+  lg3d_witch: () => {
+    LG3D.inst.confirm({ save: !!draft('w_save') });
+    S.draft.w_save = false;
+  },
 };
 
 app.addEventListener('click', (ev) => {
